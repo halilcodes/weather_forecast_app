@@ -1,20 +1,8 @@
 import streamlit as st
 import plotly.express as px
-import datetime as dt
+from backend import get_data
 
-
-def get_data(days_num):
-    today = dt.datetime.today()
-    date = [(today + dt.timedelta(days=i)).strftime("%b %d, %Y") for i in range(days_num)]
-    temperature = [30+i for i in range(days_num)]
-    temperature = [days_num * i for i in temperature]
-    return date, temperature
-
-
-# st.set_page_config(layout="wide")
-
-# st.markdown("<h1 style='text-align: center'>Home</h1>", unsafe_allow_html=True)
-
+# place static or stable parts
 st.title("Weather Forecast for the Next Days")
 
 place = st.text_input("Place: ")
@@ -24,7 +12,23 @@ option = st.selectbox("Select data to view", ("Temperature", "Sky"))
 
 st.subheader(f"{option} for the next {days} days in {place.capitalize()}")
 
-d, t = get_data(int(days))
-figure = px.line(x=d, y=t, labels={"x": "Date", "y": "Temperature (C)"})
 
-st.plotly_chart(figure)
+if place:
+    try:
+        # get the temp/sky data
+        sky, temp, dates_in_str = get_data(place, days)
+
+        # plot the temperature plot
+        if option == "Temperature":
+            figure = px.line(x=dates_in_str, y=temp, labels={"x": "Date", "y": "Temperature (C)"})
+            st.plotly_chart(figure)
+
+        elif option == "Sky":
+            # for condition, date in zip(sky, dates_in_str):
+            #     st.image(f"images/{condition}.png", width=150)
+            #     st.write(date)
+            paths = [f"images/{condition}.png" for condition in sky]
+            st.image(paths, width=115, caption=dates_in_str)
+    except KeyError as e:
+        # st.write(e)
+        st.write("Invalid City name, please try again.")
